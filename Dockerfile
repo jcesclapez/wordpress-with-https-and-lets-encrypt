@@ -5,7 +5,8 @@ RUN apt-get update && \
         rm -r /var/lib/apt/lists/* && \
         a2enmod ssl && \
         a2ensite default-ssl 
-ADD source *htaccess dest /pruebas/
+
+ADD .htaccess /var/www/html/
 
 ENV WEB_URL _default_
 
