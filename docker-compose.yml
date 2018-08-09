@@ -1,0 +1,64 @@
+version: '2.1'
+
+services:
+
+  wordpress:
+    image: jcesclapez/wordpress-with-https
+    restart: always
+    volumes:
+      - web:/var/www/html
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - nginx-proxy
+    environment:
+      WORDPRESS_DB_PASSWORD: docker-secrets
+      VIRTUAL_HOST: yourdomain.com
+      LETSENCRYPT_HOST: yourdomain.com
+      LETSENCRYPT_EMAIL: your@mail.com
+      VIRTUAL_PROTO: https
+      VIRTUAL_PORT: 443
+
+  mysql:
+    image: mysql
+    restart: always
+    volumes:
+      - web_db:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks:
+      - backend
+    environment:
+      MYSQL_ROOT_PASSWORD: docker-secrets
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    networks:
+      - frontend
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /Users/jcesclapez/Downloads/docker/certs:/etc/nginx/certs:ro
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+
+  lets-encrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - /Users/jcesclapez/Downloads/docker/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+
+volumes:
+ web_db:
+ web:
+
+networks:
+ frontend:
+ backend:
